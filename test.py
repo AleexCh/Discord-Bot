@@ -5,6 +5,12 @@ from discord.ext import tasks
 import time
 from datetime import datetime
 from pytz import timezone
+from PIL import Image
+import pytesseract
+
+
+
+
 
 
 #function helper to format an epoch timestamp to a gicen timezone and format
@@ -48,8 +54,10 @@ ursus_end2_epoch=int(datetime(year,month,day,22,0,0).timestamp())
 
 
 def print_test():
-  print('>>>>')
-  print(ursus_start1_epoch)
+
+  print(pytesseract.image_to_string('image1.jpg'))
+ # print('>>>>')
+  #print(ursus_start1_epoch)
   #print(str(month) + '\n')
  # print(datetime.fromtimestamp(my_time).month)
   #print(str(get_date_epoch) + '\n')

@@ -19,7 +19,6 @@ my_secret = os.environ['TOKEN']
 my_time = int(time.time())
 
 
-#"""
 #function helper to format an epoch timestamp to a gicen timezone and format
 def format_timestamp(timestamp, timezone, format):
   time = datetime.fromtimestamp(timestamp, tz=timezone).strftime(format)
@@ -199,32 +198,24 @@ async def on_message(message):
         op_and_number = parameter[1]
         #this returns only the operator + or -
         operator = op_and_number[0]
-        #if lenght is less than 2 is a single digit operation +1 -1, etc
-        if len(op_and_number) <= 2:
-          new_time = calculate_time(server_reset_time, operator,
-                                    int(op_and_number[1]) * 3600)
-        #else is a 2 digits operation +10, -10, etc
-        elif 2 < len(op_and_number) <= 3:
-          new_time = calculate_time(
-            server_reset_time, operator,
-            int(op_and_number[1] + op_and_number[2]) * 3600)
-        #user tried to add or substract a 3 digit hour, error
-        else:
-          response = " Number range exceeded. Try again with a smaller number"
-          embed = discord.Embed(title="Error",
-                                description=response,
-                                colour=discord.Colour.purple())
-          await message.channel.send(embed=embed)
-          return
 
+        #ammount that's is being added/substracted
+        addends=op_and_number[1:]
+      
+        #if lenght is less than 2 is a single digit operation +1 -1, etc
+        new_time = calculate_time(server_reset_time, operator,int(addends) * 3600)
+        
         response = op_and_number + ' is: <t:' + str(new_time) + ':t>'
         embed = discord.Embed(title="Time Converter",
                               description=response,
                               colour=discord.Colour.purple())
         await message.channel.send(embed=embed)
 
-    #command to roll
-
+    #command to post esfera PQ guide
+    if (command=='esfera'):
+      embed=discord.Embed(title='Esfera PQ',colour=discord.Colour.purple())
+      embed.set_image(url="https://media.discordapp.net/attachments/991018662133657741/995399795306938448/7cfl8wyemec81.png")
+      await message.channel.send(embed=embed)
 
 #this calls the web server which uptimerobot will be calling every x minutes.
 keep_alive()

@@ -12,6 +12,8 @@ Flask = "^2.2.0"
 urllib3 = "^1.26.12"
 discord = "^2.3.0"
 pytz = "^2023.3"
+Pillow = "^9.5.0"
+pytesseract = "^0.3.10"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"

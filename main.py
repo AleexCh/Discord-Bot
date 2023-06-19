@@ -5,6 +5,7 @@ from discord.ext import tasks
 import time, pytz
 from datetime import datetime, timedelta
 from pytz import timezone
+import operator
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -23,6 +24,16 @@ my_time = int(time.time())
 def format_timestamp(timestamp, timezone, format):
   time = datetime.fromtimestamp(timestamp, tz=timezone).strftime(format)
   return time
+
+
+ops = {'+': operator.add, '-': operator.sub}
+
+
+#helper function to calculate new times for time command
+#using operator module, it does the operation given the string for the operator it receives
+def calculate_time(time1, operator, time2):
+  new_time = ops[operator](time1, time2)
+  return new_time
 
 
 #updating voice channel name task, it loops every x minutes
@@ -81,6 +92,7 @@ async def on_message(message):
     #we split the message from the prefix to get the command the user is trying to run
     command = message.content.split(
       '~', 1)[1].lower()  #to make command not case sensitive.
+    #command to get ursus times
     if (command == 'ursus'):
       #we want to get the day, month and year from current time
       day = datetime.fromtimestamp(my_time).day
@@ -151,17 +163,67 @@ async def on_message(message):
                               colour=discord.Colour.purple())
         await message.channel.send(embed=embed)
 
-    if (command == 'time'):
-      response = 'Your time right now is: <t:' + str(my_time) + ':t>'
-      embed = discord.Embed(description=response,
-                            colour=discord.Colour.purple())
-      await message.channel.send(embed=embed)
+    #command to get server time
     if (command == 'servertime'):
       UTC_time = datetime.fromtimestamp(my_time).strftime('%H:%M %p')
-      response = 'The server time right now is: ' + UTC_time
+      response = 'The server time right now is: ' + UTC_time + ' \n > Maplestory GMS uses UTC as default server time'
       embed = discord.Embed(description=response,
                             colour=discord.Colour.purple())
       await message.channel.send(embed=embed)
+
+    #command to get the local time compared to server reset time
+    if command.startswith('time'):
+      splitted_comand = command.split('time')
+      #if there is nothing after time
+      if not splitted_comand[1]:
+        response = 'Your time right now is: <t:' + str(my_time) + ':t>'
+        embed = discord.Embed(description=response,
+                              colour=discord.Colour.purple())
+        await message.channel.send(embed=embed)
+
+      #there is something after time. we want to calculate whats the timestamp in relation to reset time (00:00 UTC). example: If user looks for time +1 it will show their local time when it is 00+1 UTC. If user local time is EST, it will show 9 PM
+      else:
+        #split by the space and not take it into consideration
+        parameter = splitted_comand[1].split(' ')
+
+        #we want to get the day, month and year from current time
+        day = datetime.fromtimestamp(my_time).day
+        month = datetime.fromtimestamp(my_time).month
+        year = datetime.fromtimestamp(my_time).year
+
+        #server reset is at 00:00 UTC
+        server_reset_time = int(
+          datetime(year, month, day, 0, 0, 0).timestamp())
+
+        #this returns the operator + the number(s) , +1, -1 etc
+        op_and_number = parameter[1]
+        #this returns only the operator + or -
+        operator = op_and_number[0]
+        #if lenght is less than 2 is a single digit operation +1 -1, etc
+        if len(op_and_number) <= 2:
+          new_time = calculate_time(server_reset_time, operator,
+                                    int(op_and_number[1]) * 3600)
+        #else is a 2 digits operation +10, -10, etc
+        elif 2 < len(op_and_number) <= 3:
+          new_time = calculate_time(
+            server_reset_time, operator,
+            int(op_and_number[1] + op_and_number[2]) * 3600)
+        #user tried to add or substract a 3 digit hour, error
+        else:
+          response = " Number range exceeded. Try again with a smaller number"
+          embed = discord.Embed(title="Error",
+                                description=response,
+                                colour=discord.Colour.purple())
+          await message.channel.send(embed=embed)
+          return
+
+        response = op_and_number + ' is: <t:' + str(new_time) + ':t>'
+        embed = discord.Embed(title="Time Converter",
+                              description=response,
+                              colour=discord.Colour.purple())
+        await message.channel.send(embed=embed)
+
+    #command to roll
 
 
 #this calls the web server which uptimerobot will be calling every x minutes.

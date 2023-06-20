@@ -2,7 +2,7 @@ import discord
 import os
 from keep_alive import keep_alive
 from discord.ext import tasks
-import time, pytz
+import time
 from datetime import datetime, timedelta
 from pytz import timezone
 import operator
@@ -96,9 +96,8 @@ async def on_message(message):
 
   #respond only if using the prefix ~
   if message.content.startswith('~'):
-    #we split the message from the prefix to get the command the user is trying to run
-    command = message.content.split(
-      '~', 1)[1].lower()  #to make command not case sensitive.
+    #we need to know wht is the command after the prefix
+    command = message.content[1:].lower()  #to make command not case sensitive.
     #command to get ursus times
     if (command == 'ursus'):
       #we want to get the day, month and year from current time
@@ -180,17 +179,17 @@ async def on_message(message):
 
     #command to get the local time compared to server reset time
     if command.startswith('time'):
-      splitted_comand = command.split('time')
-      #split by the space and not take it into consideration
-      parameter = splitted_comand[1].split(' ')
+      splitted_command = command.split('time')
+      #splitted_command[1] returns the string after 'time', we don't care for the space ' ' so we slice it [1:]
+      arguments = splitted_command[1][1:]
       #if there is nothing after time
-      if not splitted_comand[1]:
+      if not splitted_command[1]:
         response = 'Your time right now is: <t:' + str(my_time) + ':t>'
         embed = discord.Embed(description=response,
                               colour=discord.Colour.purple())
         await message.channel.send(embed=embed)
       #check if after ~time there is a + or -
-      elif (parameter[1][0] == '+' or parameter[1][0] == '-'):
+      elif (arguments[0] == '+' or arguments[0] == '-'):
         #we want to get the day, month and year from current time
         day = datetime.fromtimestamp(my_time).day
         month = datetime.fromtimestamp(my_time).month
@@ -200,20 +199,16 @@ async def on_message(message):
         server_reset_time = int(
           datetime(year, month, day, 0, 0, 0).timestamp())
 
-        #this returns the operator + the number(s) , +1, -1 etc
-        op_and_number = parameter[1]
         #this returns only the operator + or -
-        operator = op_and_number[0]
+        operator = arguments[0]
 
         #ammount that's is being added/substracted
-        addends = op_and_number[1:]
+        addends = arguments[1:]
 
         #if lenght is less than 2 is a single digit operation +1 -1, etc
-        new_time = int(calculate_time(server_reset_time, operator,
-                                  float(addends) * 3600))
-        print('ok')
+        new_time = int(calculate_time(server_reset_time, operator,float(addends) * 3600))
 
-        response = op_and_number + ' is: <t:' + str(new_time) + ':t>'
+        response = arguments + ' is: <t:' + str(new_time) + ':t>'
         embed = discord.Embed(title="Time Converter",
                               description=response,
                               colour=discord.Colour.purple())

@@ -83,7 +83,7 @@ async def update_my_time():
 
 @client.event
 async def on_ready():
-  #update_clocks.start()
+  update_clocks.start()
   update_my_time.start()
   print("logged in as {0.user}".format(client))
 
@@ -209,8 +209,9 @@ async def on_message(message):
         addends = op_and_number[1:]
 
         #if lenght is less than 2 is a single digit operation +1 -1, etc
-        new_time = calculate_time(server_reset_time, operator,
-                                  int(addends) * 3600)
+        new_time = int(calculate_time(server_reset_time, operator,
+                                  float(addends) * 3600))
+        print('ok')
 
         response = op_and_number + ' is: <t:' + str(new_time) + ':t>'
         embed = discord.Embed(title="Time Converter",
@@ -244,5 +245,5 @@ async def on_message(message):
 
 
 #this calls the web server which uptimerobot will be calling every x minutes.
-#keep_alive()
+keep_alive()
 client.run(my_secret)

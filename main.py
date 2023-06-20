@@ -74,9 +74,17 @@ async def update_clocks():
   print("Clocks updated!")
 
 
+#I need to update my time to get more precise time...
+@tasks.loop(seconds=15)
+async def update_my_time():
+  global my_time
+  my_time = int(time.time())
+
+
 @client.event
 async def on_ready():
-  update_clocks.start()
+  #update_clocks.start()
+  update_my_time.start()
   print("logged in as {0.user}".format(client))
 
 
@@ -173,18 +181,16 @@ async def on_message(message):
     #command to get the local time compared to server reset time
     if command.startswith('time'):
       splitted_comand = command.split('time')
+      #split by the space and not take it into consideration
+      parameter = splitted_comand[1].split(' ')
       #if there is nothing after time
       if not splitted_comand[1]:
         response = 'Your time right now is: <t:' + str(my_time) + ':t>'
         embed = discord.Embed(description=response,
                               colour=discord.Colour.purple())
         await message.channel.send(embed=embed)
-
-      #there is something after time. we want to calculate whats the timestamp in relation to reset time (00:00 UTC). example: If user looks for time +1 it will show their local time when it is 00+1 UTC. If user local time is EST, it will show 9 PM
-      else:
-        #split by the space and not take it into consideration
-        parameter = splitted_comand[1].split(' ')
-
+      #check if after ~time there is a + or -
+      elif (parameter[1][0] == '+' or parameter[1][0] == '-'):
         #we want to get the day, month and year from current time
         day = datetime.fromtimestamp(my_time).day
         month = datetime.fromtimestamp(my_time).month
@@ -200,23 +206,43 @@ async def on_message(message):
         operator = op_and_number[0]
 
         #ammount that's is being added/substracted
-        addends=op_and_number[1:]
-      
+        addends = op_and_number[1:]
+
         #if lenght is less than 2 is a single digit operation +1 -1, etc
-        new_time = calculate_time(server_reset_time, operator,int(addends) * 3600)
-        
+        new_time = calculate_time(server_reset_time, operator,
+                                  int(addends) * 3600)
+
         response = op_and_number + ' is: <t:' + str(new_time) + ':t>'
+        embed = discord.Embed(title="Time Converter",
+                              description=response,
+                              colour=discord.Colour.purple())
+        await message.channel.send(embed=embed)
+      #else invalid parameters
+      else:
+        response = 'Try again noob..'
         embed = discord.Embed(title="Time Converter",
                               description=response,
                               colour=discord.Colour.purple())
         await message.channel.send(embed=embed)
 
     #command to post esfera PQ guide
-    if (command=='esfera'):
-      embed=discord.Embed(title='Esfera PQ',colour=discord.Colour.purple())
-      embed.set_image(url="https://media.discordapp.net/attachments/991018662133657741/995399795306938448/7cfl8wyemec81.png")
+    if (command == 'esfera'):
+      embed = discord.Embed(title='Esfera PQ', colour=discord.Colour.purple())
+      embed.set_image(
+        url=
+        "https://media.discordapp.net/attachments/991018662133657741/995399795306938448/7cfl8wyemec81.png"
+      )
       await message.channel.send(embed=embed)
 
+    #help command
+    if (command == 'help'):
+      response = 'Sup, checkout my commands.\n- Use `~ursus` : to look for ursus time!.\n- Use `~servertime` : to check server\'s time (or check the clock channel!).\n- Use `~time` : if by some divine intervention you don\'t remember your own time LOL\n- You can also use `~time (+/-)(#Number)` : to check your local time in relation to server\'s reset time. eg: `~time +3` `~time -3`.\n- Use `~esfera` : if you are lazy and don\'t want to check the guides for the esfera PQ picture.\n- Commands are not case sensitive, you can do `~UrSuS` if you want. I dare you!.\n\nAny issues or if you have any ideas for new commands please, let me know! :middle_finger:'
+      embed = discord.Embed(title="Zhongy Helps",
+                            description=response,
+                            colour=discord.Colour.purple())
+      await message.channel.send(embed=embed)
+
+
 #this calls the web server which uptimerobot will be calling every x minutes.
-keep_alive()
+#keep_alive()
 client.run(my_secret)
